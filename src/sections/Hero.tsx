@@ -73,10 +73,6 @@ export default function Hero() {
     return () => ctx.revert();
   }, []);
 
-  const scrollToForm = () => {
-    const el = document.getElementById('formulaire');
-    if (el) el.scrollIntoView({ behavior: 'smooth' });
-  };
 
   return (
     <>
