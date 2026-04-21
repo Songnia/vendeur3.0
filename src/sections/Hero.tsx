@@ -3,10 +3,56 @@ import gsap from 'gsap';
 import { Star, ShieldCheck, Volume2 } from 'lucide-react';
 import { PhoneInput } from 'react-international-phone';
 import 'react-international-phone/style.css';
+import AlertModal from '../components/AlertModal';
 
 export default function Hero() {
   const [phone, setPhone] = useState('');
+  const [modalConfig, setModalConfig] = useState<{isOpen: boolean, type: 'success' | 'error', title: string, message: string}>({
+    isOpen: false,
+    type: 'success',
+    title: '',
+    message: ''
+  });
   const sectionRef = useRef<HTMLElement>(null);
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    
+    if (!phone || phone.length < 5) {
+      setModalConfig({
+        isOpen: true, 
+        type: 'error', 
+        title: 'Numéro Invalide', 
+        message: 'Veuillez entrer un numéro de téléphone valide pour être recontacté.'
+      });
+      return;
+    }
+
+    const newReservation = {
+      id: Date.now(),
+      candidat: `${formData.get('firstName')} ${formData.get('lastName')}`,
+      email: formData.get('email'),
+      telephone: phone,
+      formation: 'Vendeur 3.0',
+      date: new Date().toISOString(),
+      statut: 'En attente'
+    };
+
+    const existing = JSON.parse(localStorage.getItem('vendeur_reservations') || '[]');
+    existing.push(newReservation);
+    localStorage.setItem('vendeur_reservations', JSON.stringify(existing));
+    
+    setModalConfig({
+      isOpen: true, 
+      type: 'success', 
+      title: 'Félicitations !', 
+      message: 'Votre réservation a bien été enregistrée. Notre équipe vous contactera sous peu.'
+    });
+    
+    e.currentTarget.reset();
+    setPhone('');
+  };
   const labelRef = useRef<HTMLDivElement>(null);
   const titleRef = useRef<HTMLHeadingElement>(null);
   const reviewRef = useRef<HTMLDivElement>(null);
@@ -33,7 +79,15 @@ export default function Hero() {
   };
 
   return (
-    <section ref={sectionRef} className="relative w-full bg-v-bg pt-16 pb-20 md:pt-24 md:pb-24 overflow-hidden">
+    <>
+      <AlertModal 
+        isOpen={modalConfig.isOpen}
+        type={modalConfig.type}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        onClose={() => setModalConfig({...modalConfig, isOpen: false})}
+      />
+      <section ref={sectionRef} className="relative w-full bg-v-bg pt-16 pb-20 md:pt-24 md:pb-24 overflow-hidden">
       
       <div className="max-w-[1200px] mx-auto px-6 relative z-10 flex flex-col items-center text-center">
         
@@ -101,6 +155,7 @@ export default function Hero() {
           {/* Right Card */}
           <div 
             ref={rightsRef} 
+            id="formulaire"
             className="lg:w-[40%] flex flex-col bg-white p-6 md:p-8 rounded-md shadow-2xl border border-gray-200 opacity-0 translate-x-8 w-full"
           >
             {/* Book Image */}
@@ -133,42 +188,42 @@ export default function Hero() {
                 Obtenez votre manuel "Vendeur 3.0" maintenant + Accès Immédiat aux bonus exclusifs pour décupler vos ventes.
               </p>
 
-              {/* Form Fields */}
-              <form className="w-full flex flex-col mb-4 border border-gray-300 rounded shadow-sm overflow-hidden bg-white text-left font-sans">
-                <div className="flex border-b border-gray-300">
-                  <input type="text" placeholder="Prénom" className="w-1/2 p-3 outline-none border-r border-gray-300 text-sm focus:bg-gray-50 transition-colors" required />
-                  <input type="text" placeholder="Nom" className="w-1/2 p-3 outline-none text-sm focus:bg-gray-50 transition-colors" required />
+              {/* Form Fields & Button */}
+              <form onSubmit={handleSubmit} className="w-full flex flex-col gap-4">
+                <div className="w-full flex flex-col border border-gray-300 rounded shadow-sm overflow-hidden bg-white text-left font-sans">
+                  <div className="flex border-b border-gray-300">
+                    <input name="firstName" type="text" placeholder="Prénom" className="w-1/2 p-3 outline-none border-r border-gray-300 text-sm focus:bg-gray-50 transition-colors" required />
+                    <input name="lastName" type="text" placeholder="Nom" className="w-1/2 p-3 outline-none text-sm focus:bg-gray-50 transition-colors" required />
+                  </div>
+                  <div className="flex border-b border-gray-300">
+                    <input name="email" type="email" placeholder="Adresse email" className="w-full p-3 outline-none text-sm focus:bg-gray-50 transition-colors" required />
+                  </div>
+                  <div className="w-full">
+                    <PhoneInput
+                      defaultCountry="cm"
+                      value={phone}
+                      onChange={(p) => setPhone(p)}
+                      className="w-full flex"
+                      inputClassName="!w-full !border-0 !p-3 !text-sm focus:!bg-gray-50 focus:!outline-none !shadow-none"
+                      countrySelectorStyleProps={{
+                        buttonClassName: "!border-0 !border-r !border-gray-300 !px-3 !bg-gray-50 !h-full hover:!bg-gray-100",
+                      }}
+                    />
+                  </div>
                 </div>
-                <div className="flex border-b border-gray-300">
-                  <input type="email" placeholder="Adresse email" className="w-full p-3 outline-none text-sm focus:bg-gray-50 transition-colors" required />
-                </div>
-                <div className="w-full">
-                  <PhoneInput
-                    defaultCountry="cm"
-                    value={phone}
-                    onChange={(p) => setPhone(p)}
-                    className="w-full flex"
-                    inputClassName="!w-full !border-0 !p-3 !text-sm focus:!bg-gray-50 focus:!outline-none !shadow-none"
-                    countrySelectorStyleProps={{
-                      buttonClassName: "!border-0 !border-r !border-gray-300 !px-3 !bg-gray-50 !h-full hover:!bg-gray-100",
-                    }}
-                  />
+
+                <div className="w-full flex flex-col gap-2">
+                  <button
+                    type="submit"
+                    className="w-full bg-v-red text-white py-4 px-4 font-display font-bold text-sm md:text-base lg:text-lg uppercase rounded shadow-cta hover:bg-v-red-dark hover:scale-[1.02] transition-transform duration-200"
+                  >
+                    RÉSERVER MON LIVRE MAINTENANT ➔
+                  </button>
+                  <p className="text-[10px] text-v-gray-muted text-center leading-snug px-2 mt-1">
+                    En cliquant sur le bouton, vous acceptez de recevoir des communications concernant votre commande. Vous pouvez vous désinscrire à tout moment.
+                  </p>
                 </div>
               </form>
-
-              {/* Button & Disclaimer */}
-              <div className="w-full flex flex-col gap-2">
-                <button
-                  type="button"
-                  onClick={scrollToForm}
-                  className="w-full bg-v-red text-white py-4 px-4 font-display font-bold text-sm md:text-base lg:text-lg uppercase rounded shadow-cta hover:bg-v-red-dark hover:scale-[1.02] transition-transform duration-200"
-                >
-                  RÉSERVER MON LIVRE MAINTENANT ➔
-                </button>
-                <p className="text-[10px] text-v-gray-muted text-center leading-snug px-2 mt-1">
-                  En cliquant sur le bouton, vous acceptez de recevoir des communications concernant votre commande. Vous pouvez vous désinscrire à tout moment.
-                </p>
-              </div>
 
               {/* Security Badges */}
               <div className="flex items-center justify-center gap-2 text-v-gray-muted pt-3 opacity-80">
@@ -181,5 +236,6 @@ export default function Hero() {
         </div>
       </div>
     </section>
+    </>
   );
 }

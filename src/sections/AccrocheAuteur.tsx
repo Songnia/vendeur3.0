@@ -46,7 +46,7 @@ export default function AccrocheAuteur() {
             </p>
 
             <p>
-              <span className="underline decoration-1 cursor-pointer text-v-red hover:text-v-red-dark transition-colors font-medium">Voulez-vous apprendre à conclure une vente sans forcer</span>, avec une méthode psychologique imparable ?
+              <span className="underline decoration-1 cursor-pointer text-v-red hover:text-v-red-dark transition-colors font-medium">Voulez-vous apprendre à conclure une vente sans forcer, avec une méthode psychologique imparable ?</span>
             </p>
 
             <blockquote className="bg-v-bg-alt border-l-4 border-v-red p-6 italic text-v-gray leading-relaxed shadow-sm mt-4">

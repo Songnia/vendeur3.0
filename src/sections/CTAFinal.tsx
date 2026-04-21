@@ -3,12 +3,58 @@ import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { PhoneInput } from 'react-international-phone';
 import 'react-international-phone/style.css';
+import AlertModal from '../components/AlertModal';
 
 gsap.registerPlugin(ScrollTrigger);
 
 export default function CTAFinal() {
   const [phone, setPhone] = useState('');
+  const [modalConfig, setModalConfig] = useState<{isOpen: boolean, type: 'success' | 'error', title: string, message: string}>({
+    isOpen: false,
+    type: 'success',
+    title: '',
+    message: ''
+  });
   const sectionRef = useRef<HTMLElement>(null);
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    
+    if (!phone || phone.length < 5) {
+      setModalConfig({
+        isOpen: true, 
+        type: 'error', 
+        title: 'Numéro Invalide', 
+        message: 'Veuillez entrer un numéro de téléphone valide pour être recontacté.'
+      });
+      return;
+    }
+
+    const newReservation = {
+      id: Date.now(),
+      candidat: `${formData.get('firstName')} ${formData.get('lastName')}`,
+      email: formData.get('email'),
+      telephone: phone,
+      formation: 'Vendeur 3.0',
+      date: new Date().toISOString(),
+      statut: 'En attente'
+    };
+
+    const existing = JSON.parse(localStorage.getItem('vendeur_reservations') || '[]');
+    existing.push(newReservation);
+    localStorage.setItem('vendeur_reservations', JSON.stringify(existing));
+    
+    setModalConfig({
+      isOpen: true, 
+      type: 'success', 
+      title: 'Félicitations !', 
+      message: 'Votre réservation a bien été enregistrée. Notre équipe vous contactera sous peu.'
+    });
+    
+    e.currentTarget.reset();
+    setPhone('');
+  };
   const cardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -20,7 +66,15 @@ export default function CTAFinal() {
   }, []);
 
   return (
-    <section ref={sectionRef} className="w-full bg-[#f4f6f8] py-20 md:py-24 font-sans text-v-dark">
+    <>
+      <AlertModal 
+        isOpen={modalConfig.isOpen}
+        type={modalConfig.type}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        onClose={() => setModalConfig({...modalConfig, isOpen: false})}
+      />
+      <section ref={sectionRef} className="w-full bg-[#f4f6f8] py-20 md:py-24 font-sans text-v-dark">
       <div className="max-w-[900px] mx-auto px-4 flex flex-col items-center">
         
         {/* Top Headlines */}
@@ -49,46 +103,48 @@ export default function CTAFinal() {
           </p>
 
           <div className="max-w-[540px] mx-auto">
-             {/* Form Fields */}
-             <form className="w-full flex flex-col mb-4 border border-gray-300 rounded shadow-sm overflow-hidden bg-white text-left font-sans">
-                <div className="flex flex-col sm:flex-row border-b border-gray-300">
-                  <input type="text" placeholder="Prénom" className="w-full sm:w-1/2 p-4 outline-none sm:border-r border-b sm:border-b-0 border-gray-300 text-sm md:text-base focus:bg-gray-50 transition-colors" required />
-                  <input type="text" placeholder="Nom" className="w-full sm:w-1/2 p-4 outline-none text-sm md:text-base focus:bg-gray-50 transition-colors" required />
+             {/* Form Fields & Button */}
+             <form onSubmit={handleSubmit} className="w-full flex flex-col gap-4">
+               <div className="w-full flex flex-col border border-gray-300 rounded shadow-sm overflow-hidden bg-white text-left font-sans">
+                  <div className="flex flex-col sm:flex-row border-b border-gray-300">
+                    <input name="firstName" type="text" placeholder="Prénom" className="w-full sm:w-1/2 p-4 outline-none sm:border-r border-b sm:border-b-0 border-gray-300 text-sm md:text-base focus:bg-gray-50 transition-colors" required />
+                    <input name="lastName" type="text" placeholder="Nom" className="w-full sm:w-1/2 p-4 outline-none text-sm md:text-base focus:bg-gray-50 transition-colors" required />
+                  </div>
+                  <div className="flex border-b border-gray-300">
+                    <input name="email" type="email" placeholder="Adresse email" className="w-full p-4 outline-none text-sm md:text-base focus:bg-gray-50 transition-colors" required />
+                  </div>
+                  <div className="w-full">
+                    <PhoneInput
+                      defaultCountry="cm"
+                      value={phone}
+                      onChange={(p) => setPhone(p)}
+                      className="w-full flex"
+                      inputClassName="!w-full !border-0 !p-4 !text-sm md:!text-base focus:!bg-gray-50 focus:!outline-none !shadow-none"
+                      countrySelectorStyleProps={{
+                        buttonClassName: "!border-0 !border-r !border-gray-300 !px-4 !bg-gray-50 !h-full hover:!bg-gray-100",
+                      }}
+                    />
+                  </div>
                 </div>
-                <div className="flex border-b border-gray-300">
-                  <input type="email" placeholder="Adresse email" className="w-full p-4 outline-none text-sm md:text-base focus:bg-gray-50 transition-colors" required />
-                </div>
-                <div className="w-full">
-                  <PhoneInput
-                    defaultCountry="cm"
-                    value={phone}
-                    onChange={(p) => setPhone(p)}
-                    className="w-full flex"
-                    inputClassName="!w-full !border-0 !p-4 !text-sm md:!text-base focus:!bg-gray-50 focus:!outline-none !shadow-none"
-                    countrySelectorStyleProps={{
-                      buttonClassName: "!border-0 !border-r !border-gray-300 !px-4 !bg-gray-50 !h-full hover:!bg-gray-100",
-                    }}
-                  />
+
+                <div className="w-full flex flex-col gap-2">
+                  <button
+                    type="submit"
+                    className="w-full bg-v-red text-white py-5 px-3 md:px-4 font-display font-bold text-sm md:text-[18px] uppercase tracking-wide rounded-md shadow-cta hover:bg-v-red-dark hover:scale-[1.02] transition-transform duration-200"
+                  >
+                    🛒 OUI ! RÉSERVER MON LIVRE MAINTENANT
+                  </button>
+                  <div className="text-[12px] text-gray-500 text-center leading-snug px-2 mt-2">
+                    Vous payez seulement 49 000 FCFA + Frais de livraison (Cameroun ou International).
+                  </div>
                 </div>
               </form>
-
-              {/* Button & Disclaimer */}
-              <div className="w-full flex flex-col gap-2">
-                <button
-                  type="button"
-                  className="w-full bg-[#4A72B2] text-white py-5 px-3 md:px-4 font-display font-bold text-sm md:text-[18px] uppercase tracking-wide rounded-md shadow-cta hover:bg-[#3b5d95] hover:scale-[1.02] transition-transform duration-200"
-                >
-                  🛒 OUI ! RÉSERVER MON LIVRE MAINTENANT
-                </button>
-                <div className="text-[12px] text-gray-500 text-center leading-snug px-2 mt-2">
-                  Vous payez seulement 49 000 FCFA + Frais de livraison (Cameroun ou International).
-                </div>
-              </div>
           </div>
           
         </div>
 
       </div>
     </section>
+    </>
   );
 }
